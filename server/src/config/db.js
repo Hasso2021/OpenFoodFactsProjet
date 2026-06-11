@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 /**
- * Connexion à MongoDB via la variable MONGODB_URI du fichier .env
+ * Connexion à MongoDB (Atlas ou local) via MONGODB_URI dans le fichier .env
  */
 export async function connectDB() {
   const uri = process.env.MONGODB_URI;

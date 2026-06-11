@@ -2,45 +2,24 @@
 
 Application web responsive pour rechercher des produits alimentaires, consulter leurs informations nutritionnelles et trouver des substituts plus sains grâce à l'API [Open Food Facts](https://world.openfoodfacts.org).
 
-**Projet scolaire** — Open Data
+
 
 ## Stack technique
 
-| Couche | Technologie |
-|--------|-------------|
-| Frontend | React 18 + Vite |
-| Backend | Node.js + Express |
-| Base de données | MongoDB + Mongoose |
-| Authentification | JWT + bcrypt |
-| Requêtes HTTP | Axios |
-| Graphiques | Chart.js |
+Frontend -> React 18 + Vite 
+Backend -> Node.js + Express
+Base de données -> MongoDB + Mongoose
+Authentification -> JWT + bcrypt
+Requête HTTP -> Axios 
+Graphique -> Chart.js
 
-## Structure du projet
+|
 
-```
-OpenData_Projet_Solo/
-├── client/          # Frontend React (Vite)
-│   ├── src/
-│   │   ├── components/   # Composants réutilisables
-│   │   ├── context/      # Contexte d'authentification
-│   │   ├── pages/        # Pages de l'application
-│   │   └── services/     # Appels API vers le backend
-│   └── package.json
-├── server/          # Backend Express
-│   ├── src/
-│   │   ├── config/       # Connexion MongoDB
-│   │   ├── middleware/   # Auth JWT
-│   │   ├── models/       # Schémas Mongoose
-│   │   ├── routes/       # Routes API REST
-│   │   └── services/     # Intégration Open Food Facts
-│   └── package.json
-└── README.md
-```
 
 ## Prérequis
 
 - [Node.js](https://nodejs.org/) v18 ou supérieur
-- [MongoDB](https://www.mongodb.com/) (local sur le port 27017, ou MongoDB Atlas)
+- Un compte [MongoDB Atlas](https://www.mongodb.com/atlas) (gratuit — pas besoin d'installer MongoDB en local)
 - npm (inclus avec Node.js)
 
 ## Installation
@@ -55,7 +34,13 @@ cd ../client
 npm install
 ```
 
-### 2. Configurer les variables d'environnement
+
+
+```
+mongodb+srv://monuser:monmotdepasse@cluster0.xxxxx.mongodb.net/openfactfood?retryWrites=true&w=majority
+```
+
+### 3. Configurer les variables d'environnement
 
 **Serveur** — copier le fichier exemple :
 
@@ -67,8 +52,7 @@ cp .env.example .env
 Éditer `server/.env` :
 
 ```env
-# MongoDB local (recommandé pour le développement)
-MONGODB_URI=mongodb://127.0.0.1:27017/openfactfood
+MONGODB_URI=mongodb+srv://USER:PASSWORD@cluster0.xxxxx.mongodb.net/openfactfood?retryWrites=true&w=majority
 
 JWT_SECRET=votre_cle_secrete_longue_et_aleatoire
 JWT_EXPIRES_IN=7d
@@ -76,6 +60,9 @@ PORT=5000
 CLIENT_URL=http://localhost:5173
 NODE_ENV=development
 ```
+
+> **Alternative locale** : si MongoDB est installé sur votre machine, utilisez  
+> `MONGODB_URI=mongodb://127.0.0.1:27017/openfactfood`
 
 **Client** (optionnel — le proxy Vite fonctionne par défaut) :
 
@@ -88,7 +75,7 @@ cp .env.example .env
 VITE_API_URL=http://localhost:5000/api
 ```
 
-### 3. Initialiser la base de données (optionnel)
+### 4. Initialiser la base de données (optionnel)
 
 Crée un compte admin et des produits d'exemple :
 
@@ -121,14 +108,14 @@ Application : http://localhost:5173
 
 ## Collections MongoDB
 
-| Collection | Rôle |
-|------------|------|
-| `users` | Comptes utilisateurs |
-| `savedsubstitutions` | Substitutions sauvegardées par l'utilisateur |
-| `substitutes` | Substitutions créées par l'admin |
-| `products` | Produits ajoutés localement par l'admin |
 
-> Les produits Open Food Facts ne sont **pas** stockés en base : ils sont récupérés via l'API à chaque recherche.
+Collection              Rôle
+`users`                Comptes utilisateurs 
+`savedsubstitutions`   Substitutions sauvegardées par l'utilisateur
+`substitutes`          Substitutions créées par l'admin 
+`products`             Produits ajoutés localement par l'admin 
+
+Les produits Open Food Facts ne sont pas stockés en base : ils sont récupérés via l'API à chaque recherche.
 
 ## Endpoints API
 
