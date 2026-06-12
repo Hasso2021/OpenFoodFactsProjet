@@ -32,18 +32,11 @@ async function seed() {
     console.log('Admin déjà existant');
   }
 
+  // Supprimer l'ancien produit erroné (7622210449283 = biscuit Prince, pas Nutella)
+  await Product.deleteOne({ code: '7622210449283' });
+  await Substitute.deleteMany({ originalCode: '7622210449283' });
+
   const sampleProducts = [
-    {
-      code: '7622210449283',
-      product_name: 'Nutella',
-      product_name_fr: 'Nutella',
-      nutriscore_grade: 'E',
-      image_url: 'https://images.openfoodfacts.org/images/products/762/221/044/9283/front_fr.400.jpg',
-      categories_tags: ['en:spreads', 'en:sweet-spreads'],
-      allergens_tags: ['en:nuts', 'en:milk', 'en:soybeans'],
-      nutriments: { 'energy-kcal_100g': 539, fat_100g: 30.9, sugars_100g: 56.3 },
-      source: 'local',
-    },
     {
       code: '3017620422003',
       product_name: 'Nutella',
@@ -55,6 +48,15 @@ async function seed() {
       allergens_tags: ['en:nuts', 'en:milk', 'en:soybeans'],
       source: 'local',
     },
+    {
+      code: '3229820100234',
+      product_name: 'Biscuits fourrés chocolat noir',
+      product_name_fr: 'Fourrés Chocolat Noir',
+      nutriscore_grade: 'D',
+      categories_tags: ['en:biscuits', 'en:sweet-snacks'],
+      allergens_tags: ['en:gluten', 'en:milk', 'en:soybeans'],
+      source: 'local',
+    },
   ];
 
   for (const p of sampleProducts) {
@@ -62,22 +64,24 @@ async function seed() {
   }
   console.log('Produits d\'exemple ajoutés');
 
-  const nutella = await Product.findOne({ code: '7622210449283' });
+  const nutella = await Product.findOne({ code: '3017620422003' });
   if (nutella) {
     await Substitute.findOneAndUpdate(
-      { originalCode: '7622210449283' },
+      { originalCode: '3017620422003' },
       {
-        originalCode: '7622210449283',
+        originalCode: '3017620422003',
         originalProduct: nutella.toObject(),
         substituteProduct: {
-          code: '4008258038001',
-          product_name: 'Dark Chocolate Hazelnut Spread',
-          product_name_fr: 'Pâte à tartiner cacao noisettes',
-          nutriscore_grade: 'C',
-          categories_tags: ['en:spreads'],
-          allergens_tags: ['en:nuts'],
+          code: '80841197',
+          product_name: 'ZERO',
+          product_name_fr: 'Pâte à tartiner cacao noisettes ZERO',
+          nutriscore_grade: 'c',
+          image_url:
+            'https://images.openfoodfacts.net/images/products/000/008/084/1197/front_de.28.400.jpg',
+          categories_tags: ['en:cocoa-and-hazelnuts-spreads', 'en:spreads'],
+          allergens_tags: ['en:nuts', 'en:milk'],
         },
-        reason: 'Lower sugar content and better Nutri-Score',
+        reason: 'Moins de sucre et meilleur Nutri-Score (C vs E)',
         createdBy: admin._id,
         isActive: true,
       },

@@ -56,11 +56,13 @@ router.get('/search', async (req, res) => {
       totalCount = offResult.count;
     }
 
-    // Fusion : produits locaux en premier, sans doublons par code-barres
-    const seen = new Set(localProducts.map((p) => p.code));
+    // Fusion : Open Food Facts en priorité (source fiable), produits locaux en complément
+    const offCodes = new Set(offProducts.map((p) => p.code));
     const merged = [
-      ...localProducts.map((p) => p.toObject()),
-      ...offProducts.filter((p) => !seen.has(p.code)),
+      ...offProducts,
+      ...localProducts
+        .map((p) => p.toObject())
+        .filter((p) => !offCodes.has(p.code)),
     ];
 
     res.json({
@@ -83,19 +85,19 @@ router.get('/barcode/:code', async (req, res) => {
   try {
     const { code } = req.params;
 
-    // Priorité à la base locale
-    let product = await Product.findOne({ code });
-    if (product) {
-      return res.json({ product: product.toObject(), source: 'local' });
+    // Priorité à Open Food Facts (le code-barres est l'identifiant officiel)
+    const offProduct = await getProductByBarcode(code);
+    if (offProduct) {
+      return res.json({ product: offProduct, source: 'off' });
     }
 
-    // Sinon, interroger Open Food Facts
-    const offProduct = await getProductByBarcode(code);
-    if (!offProduct) {
+    // Sinon, produit ajouté manuellement par l'admin
+    const localProduct = await Product.findOne({ code });
+    if (!localProduct) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    res.json({ product: offProduct, source: 'off' });
+    res.json({ product: localProduct.toObject(), source: 'local' });
   } catch (error) {
     console.error('Barcode lookup error:', error.message);
     res.status(500).json({ message: 'Failed to fetch product' });
@@ -148,32 +150,47 @@ router.get('/:code/substitutes', async (req, res) => {
       }
     }
 
-    // Récupérer le produit d'origine
-    let product = await Product.findOne({ code });
+    // Produit d'origine : Open Food Facts en priorité (données complètes pour la recherche)
+    let product = await getProductByBarcode(code);
     if (!product) {
-      product = await getProductByBarcode(code);
-    } else {
-      product = product.toObject();
+      const localProduct = await Product.findOne({ code });
+      if (localProduct) product = localProduct.toObject();
     }
 
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
 
-    // Substitutions définies par l'admin
-    const curated = await Substitute.find({ originalCode: code, isActive: true });
+    // Substitutions définies par l'admin (enrichies avec OFF si le code-barres existe)
+    const curatedDocs = await Substitute.find({ originalCode: code, isActive: true });
+    const curated = await Promise.all(
+      curatedDocs.map(async (s) => {
+        let substitute = s.substituteProduct?.toObject?.() || s.substituteProduct;
+        if (substitute?.code) {
+          const offSub = await getProductByBarcode(substitute.code);
+          if (offSub) {
+            substitute = { ...offSub, ...substitute, image_url: offSub.image_url || substitute.image_url };
+          }
+        }
+        return {
+          id: s._id,
+          substitute,
+          reason: s.reason,
+          source: 'curated',
+        };
+      })
+    );
 
-    // Substitutions automatiques via Open Food Facts
-    const autoSubstitutes = await findHealthierSubstitutes(product, userAllergens);
+    const curatedCodes = new Set(curated.map((c) => c.substitute?.code).filter(Boolean));
+
+    // Substitutions automatiques via Open Food Facts (sans doublons admin)
+    const autoSubstitutes = (await findHealthierSubstitutes(product, userAllergens)).filter(
+      (s) => !curatedCodes.has(s.code)
+    );
 
     res.json({
       original: product,
-      curated: curated.map((s) => ({
-        id: s._id,
-        substitute: s.substituteProduct,
-        reason: s.reason,
-        source: 'curated',
-      })),
+      curated,
       suggestions: autoSubstitutes.map((s) => ({
         substitute: s,
         reason: `Better Nutri-Score (${s.nutriscore_grade?.toUpperCase()} vs ${product.nutriscore_grade?.toUpperCase()})`,

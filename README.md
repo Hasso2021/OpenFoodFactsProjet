@@ -40,7 +40,7 @@ npm install
 mongodb+srv://monuser:monmotdepasse@cluster0.xxxxx.mongodb.net/openfactfood?retryWrites=true&w=majority
 ```
 
-### 3. Configurer les variables d'environnement
+### 2. Configurer les variables d'environnement
 
 **Serveur** — copier le fichier exemple :
 
@@ -75,7 +75,7 @@ cp .env.example .env
 VITE_API_URL=http://localhost:5000/api
 ```
 
-### 4. Initialiser la base de données (optionnel)
+### 3. Initialiser la base de données (optionnel)
 
 Crée un compte admin et des produits d'exemple :
 
